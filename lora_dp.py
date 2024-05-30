@@ -248,7 +248,7 @@ def main():
     parser.add_argument(
         "--accumulation-steps",
         type=int,
-        default=2,
+        default=1,
         help="Number of gradient accumulation steps",
     )
     parser.add_argument(
@@ -286,7 +286,15 @@ def main():
 
     # Compute noise multiplier to achieve the desired epsilon
     if args.sigma is None:
-        args.sigma = get_noise_multiplier(target_epsilon=args.epsilon, target_delta=args.delta, sample_rate=args.batch_size / len(train_dataset), epochs=args.epochs)
+        args.sigma = get_noise_multiplier(
+            target_epsilon=args.epsilon, 
+            target_delta=args.delta, 
+            sample_rate=args.batch_size / len(train_dataset), 
+            epochs=args.epochs
+        )
+
+    # Logging for verification
+    print(f"Calculated noise multiplier (sigma): {args.sigma}")
 
     train_loader = DataLoader(
         train_dataset,
@@ -321,10 +329,10 @@ def main():
             optimizer=optimizer,
             data_loader=train_loader,
             target_epsilon=args.epsilon,
-            target_delta=args.delta,
+            target_delta=1.0 / len(train_dataset),
             epochs=args.epochs,
             max_grad_norm=args.max_per_sample_grad_norm,
-            poisson_sampling=False,
+            poisson_sampling=True,
         )
 
     mean_accuracy = 0
